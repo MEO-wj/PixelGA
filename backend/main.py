@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 from ga_engine import (
-    DEFAULT_MAX_PIXEL, GAParams,
+    GAParams,
     create_random_population,
     calc_fitness,
     run_one_generation,
