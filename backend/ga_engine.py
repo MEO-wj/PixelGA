@@ -36,8 +36,6 @@ def mse_to_similarity(mse: float) -> float:
     """
     MSE 转成前端显示的相似度百分比。
     两张完全随机的图期望 sqrt(MSE) 约等于 104，以此为 0% 基准线，
-    完美匹配 sqrt(MSE) = 0 对应 100%。
-    之前用 255 做分母，随机图也有 60%，看起来太假。
     """
     RANDOM_BASELINE = 104.0
     raw = max(0.0, 1.0 - np.sqrt(max(0.0, mse)) / RANDOM_BASELINE)
