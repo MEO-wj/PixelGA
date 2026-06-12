@@ -1,74 +1,154 @@
-# 鼠标防线 Cursor Defense
+# 🎨 像素画进化系统 — PixelGA
 
-这是根据 `docs/cursor_defense_design.md` 做的可玩原型。现在项目拆成 C++ 后端和 TypeScript 前端：
+基于遗传算法的图像像素画逼近系统。上传一张图片，AI 通过逐代进化随机像素画，使其逐渐接近目标图像。
 
-- C++ 后端负责游戏规则、寻路、鸟群、碰撞、刷怪、卡牌效果和难度曲线。
-- TypeScript 前端只负责收集鼠标位置、请求后端状态、绘制 Canvas 和展示 UI。
+## ✨ 功能
 
-## 运行方式
+- 📷 **上传任意图片**：支持常见图片格式，自动压缩为目标像素尺寸
+- 🧬 **遗传算法进化**：锦标赛选择 + 均匀交叉 + 自适应变异
+- 🔒 **逐像素锁定**：接近目标的像素自动冻结，计算力集中在未匹配区域
+- 📊 **实时可视化**：WebSocket 推送每代结果，Canvas 实时渲染
+- 🎯 **目标对比**：并排显示压缩后目标图与进化结果
+- ⏯ **完整控制**：开始 / 暂停 / 继续 / 重置 / 下载
+- ⚙ **可调参数**：种群大小、变异率、最大代数、像素尺寸
 
-第一次运行：
+## 🏗 技术栈
+
+| 层 | 技术 |
+|----|------|
+| 前端框架 | Vue 3 + TypeScript + Vite |
+| 前端渲染 | HTML5 Canvas（像素级绘制） |
+| 实时通信 | WebSocket（FastAPI 推送） |
+| HTTP 通信 | Axios（上传/下载） |
+| 后端框架 | Python FastAPI + Uvicorn |
+| 图像处理 | Pillow + NumPy |
+| 遗传算法 | NumPy 向量化并行计算 |
+
+## 📁 项目结构
+
+```
+PixelGA/
+├── backend/
+│   ├── main.py              # FastAPI 入口 + WebSocket 端点
+│   ├── ga_engine.py         # 遗传算法引擎（种群、选择、交叉、变异、适应度）
+│   └── requirements.txt     # Python 依赖
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts       # Vite 配置（含 API/WS 代理）
+│   ├── tsconfig.json
+│   └── src/
+│       ├── main.ts          # Vue 入口
+│       ├── App.vue          # 根组件
+│       ├── components/
+│       │   ├── ImageUploader.vue   # 图片上传
+│       │   ├── EvolutionView.vue   # Canvas 双栏显示
+│       │   ├── ControlPanel.vue    # 参数 + 按钮
+│       │   └── StatsBar.vue        # 代数 + 相似度
+│       ├── composables/
+│       │   └── useWebSocket.ts     # WebSocket 封装
+│       └── style.css
+└── docs/                    # 项目需求文档
+```
+
+## 🚀 部署方式
+
+### 环境依赖
+
+- **Python** ≥ 3.10
+- **Node.js** ≥ 18
+- **pip** 与 **npm**
+
+### 1. 克隆项目
 
 ```bash
+git clone <repo-url>
+cd PixelGA
+```
+
+### 2. 安装后端依赖
+
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### 3. 启动后端
+
+```bash
+python main.py
+# FastAPI 运行在 http://localhost:8000
+```
+
+### 4. 安装前端依赖
+
+```bash
+cd frontend
 npm install
-npm run build
 ```
 
-开发时建议直接启动前后端：
+### 5. 启动前端
 
 ```bash
-npm run dev:all
-```
-
-也可以分开启动：
-
-```bash
-npm run build:backend
-npm run start:backend
 npm run dev
+# Vite 运行在 http://localhost:3000
 ```
 
-后端默认地址：`http://127.0.0.1:8787`  
-前端默认地址：`http://127.0.0.1:5173`
+### 6. 打开浏览器
 
-## 目录说明
+访问 `http://localhost:3000`，上传图片，点击"开始进化"。
 
-```text
-backend/
-  include/cursor_defense/      C++ 头文件
-  src/                         C++ 实现文件
-  bin/                         编译输出，不提交
-frontend/
-  index.html                   前端入口
-  src/
-    api/                       请求 C++ 后端
-    render/                    Canvas 美术绘制
-    ui/                        HUD 和卡牌界面
-docs/
-  cursor_defense_design.md     原始玩法设计
-  algorithms/                  核心算法说明文档
-  wave-difficulty.md           波次难度曲线说明
-scripts/
-  build-backend.ps1            编译 C++ 后端
-  dev.ps1                      启动前后端开发环境
+## 🔧 遗传算法参数
+
+| 参数 | 默认值 | 范围 | 说明 |
+|------|--------|------|------|
+| 像素尺寸 | 64 px | 16–256 | 目标图长边像素数 |
+| 种群大小 | 100 | 10–200 | 每代个体数量 |
+| 变异率 | 0.05 | 0.005–0.2 | 每个像素的变异概率基数 |
+| 最大代数 | 5000 | 100–10000 | 进化停止代数上限 |
+| 精英比例 | 0.15 | — | 每代保留的最优个体比例 |
+| 锦标赛规模 | 5 | — | 选择时的竞争者数量 |
+
+## 📡 API
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/api/upload` | POST | 上传图片（multipart），返回 target_id |
+| `/api/download/{id}` | GET | 下载进化结果 PNG |
+| `/ws/evolve/{id}` | WebSocket | 实时进化数据流 |
+
+### WebSocket 消息协议
+
+**服务端 → 客户端**
+
+```json
+// 初始状态
+{"type": "init", "similarity": 5.2, "height": 64, "width": 48, "pixels": [...], "targetPixels": [...]}
+
+// 每代更新
+{"type": "generation", "generation": 42, "similarity": 78.5, "pixels": [...]}
+
+// 进化完成
+{"type": "complete", "generation": 5000}
 ```
 
-## 核心算法位置
+**客户端 → 服务端**
 
-- 向量场寻路：`backend/src/FlowField.cpp`
-- 鸟群算法：`backend/src/Flocking.cpp`
-- 游戏规则和难度曲线：`backend/src/GameEngine.cpp`
-- 前端渲染：`frontend/src/render/CanvasRenderer.ts`
+```json
+{"type": "start", "params": {"popSize": 100, "mutationRate": 0.05, "maxGenerations": 5000}}
+{"type": "pause"}
+{"type": "resume"}
+{"type": "reset"}
+```
 
-## 已完成内容
+## 📝 相似度计算
 
-- 桌面地图、障碍物和核心文件。
-- 10 个小光标跟随主鼠标移动。
-- 初始光标最大速度从 `520` 提高到 `624`，提高了 20%。
-- 三种病毒：普通病毒、快速病毒、垃圾文件怪。
-- 病毒通过向量场绕过障碍物并移动到核心文件。
-- 小光标接触病毒造成伤害，有单体冷却。
-- 每 30 秒弹出三选一卡牌。
-- 8 张 MVP 卡牌：数量、伤害、速度、减速、火焰轨迹、电流、文件备份、任务管理器。
-- 难度改成 6 段波次表，刷怪间隔、血量、速度和敌人比例逐步提升。
-- 文件完整度归零失败，撑过 3 分钟胜利。
+```
+相似度 = max(0, 1 − √MSE / 104) × 100%
+
+其中 MSE = 逐像素 RGB 均方误差
+104 = 随机均匀像素的期望 √MSE（基准线）
+```
+
+- 随机噪点 ≈ 0%
+- 完美匹配 = 100%
