@@ -62,7 +62,7 @@ PixelGA/
 ### 1. 克隆项目
 
 ```bash
-git clone <repo-url>
+git clone <https://github.com/MEO-wj/PixelGA.git>
 cd PixelGA
 ```
 
